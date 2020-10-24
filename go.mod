@@ -1,4 +1,4 @@
-module github.com/emer/leabra
+module github.com/schapirolab/leabra-sleep
 
 go 1.13
 
