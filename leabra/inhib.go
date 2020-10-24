@@ -4,7 +4,7 @@
 
 package leabra
 
-import "github.com/dhairyyas/leabra-sleep/fffb"
+import "github.com/schapirolab/leabra-sleep/fffb"
 
 // leabra.InhibParams contains all the inhibition computation params and functions for basic Leabra
 // This is included in leabra.Layer to support computation.

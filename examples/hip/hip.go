@@ -26,8 +26,8 @@ import (
 	"github.com/emer/etable/etensor"
 	_ "github.com/emer/etable/etview" // include to get gui views
 	"github.com/emer/etable/split"
-	"github.com/dhairyyas/leabra-sleep/hip"
-	"github.com/dhairyyas/leabra-sleep/leabra"
+	"github.com/schapirolab/leabra-sleep/hip"
+	"github.com/schapirolab/leabra-sleep/leabra"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/giv"

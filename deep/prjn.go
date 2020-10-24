@@ -7,7 +7,7 @@ package deep
 import (
 	"github.com/chewxy/math32"
 	"github.com/emer/emergent/emer"
-	"github.com/dhairyyas/leabra-sleep/leabra"
+	"github.com/schapirolab/leabra-sleep/leabra"
 	"github.com/goki/ki/ki"
 	"github.com/goki/ki/kit"
 )

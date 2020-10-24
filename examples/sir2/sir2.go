@@ -30,9 +30,9 @@ import (
 	"github.com/emer/etable/etview" // include to get gui views
 	"github.com/emer/etable/simat"
 	"github.com/emer/etable/split"
-	"github.com/dhairyyas/leabra-sleep/deep"
-	"github.com/dhairyyas/leabra-sleep/leabra"
-	"github.com/dhairyyas/leabra-sleep/pbwm"
+	"github.com/schapirolab/leabra-sleep/deep"
+	"github.com/schapirolab/leabra-sleep/leabra"
+	"github.com/schapirolab/leabra-sleep/pbwm"
 	"github.com/goki/gi/gi"
 	"github.com/goki/gi/gimain"
 	"github.com/goki/gi/giv"

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/dhairyyas/leabra-sleep/leabra"
+	"github.com/schapirolab/leabra-sleep/leabra"
 )
 
 // deep.Neuron holds the extra neuron (unit) level variables for DeepLeabra computation.

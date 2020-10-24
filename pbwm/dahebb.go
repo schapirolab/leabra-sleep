@@ -6,8 +6,8 @@ package pbwm
 
 import (
 	"github.com/chewxy/math32"
-	"github.com/dhairyyas/leabra-sleep/deep"
-	"github.com/dhairyyas/leabra-sleep/leabra"
+	"github.com/schapirolab/leabra-sleep/deep"
+	"github.com/schapirolab/leabra-sleep/leabra"
 	"github.com/goki/ki/kit"
 )
 

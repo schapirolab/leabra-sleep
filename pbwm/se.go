@@ -7,7 +7,7 @@ package pbwm
 import (
 	"log"
 
-	"github.com/dhairyyas/leabra-sleep/deep"
+	"github.com/schapirolab/leabra-sleep/deep"
 	"github.com/goki/ki/kit"
 )
 

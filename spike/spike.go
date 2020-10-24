@@ -6,7 +6,7 @@ package spike
 
 import (
 	"github.com/chewxy/math32"
-	"github.com/dhairyyas/leabra-sleep/leabra"
+	"github.com/schapirolab/leabra-sleep/leabra"
 )
 
 // ActParams is full set of activation params including those from base

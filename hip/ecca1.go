@@ -6,7 +6,7 @@ package hip
 
 import (
 	"github.com/chewxy/math32"
-	"github.com/dhairyyas/leabra-sleep/leabra"
+	"github.com/schapirolab/leabra-sleep/leabra"
 )
 
 // hip.EcCa1Prjn is for EC <-> CA1 projections, to perform error-driven
