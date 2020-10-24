@@ -13,7 +13,7 @@ import (
 	"github.com/emer/emergent/params"
 	"github.com/emer/emergent/prjn"
 	"github.com/emer/etable/etensor"
-	"github.com/emer/leabra/leabra"
+	"github.com/dhairyyas/leabra-sleep/leabra"
 )
 
 // Note: this test project exactly reproduces the configuration and behavior of

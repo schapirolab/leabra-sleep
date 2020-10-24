@@ -453,7 +453,7 @@ func (pj *Prjn) InitSdEffWt(inc float32, dec float32) {
 		//sy.Rec = 0.002
 		sy.CaDec = dec
 		sy.CaInc = inc
-		sy.SdCaThr = 0
+		sy.SdCaThr = 0.0
 		sy.SdCaGain = 1
 		sy.SdCaThrRescale = sy.SdCaGain / (1.0 - sy.SdCaThr)
 		sy.SenRecAct = 0
@@ -551,6 +551,28 @@ func (pj *Prjn) RunSumUpdt(init bool, si int, preSynAct float32) {
 	}
 }
 
+// CalcActP calculates final ActP values for each synapse
+func (pj *Prjn) CalcActP(pluscount int, si int) {
+	nc := pj.SConN[si]
+	st := pj.SConIdxSt[si]
+	counter := make([]int32, nc)
+	for ci := range counter {
+		sy := &pj.Syns[int32(ci)+st]
+		sy.CalcActP(pluscount)
+	}
+}
+
+// CalcActM calculates final ActM values for each synapse
+func (pj *Prjn) CalcActM(minuscount int, si int) {
+	nc := pj.SConN[si]
+	st := pj.SConIdxSt[si]
+	counter := make([]int32, nc)
+	for ci := range counter {
+		sy := &pj.Syns[int32(ci)+st]
+		sy.CalcActM(minuscount)
+	}
+}
+
 // Added by DZ
 func (pj *Prjn) CalSynDep(si int) {
 	//fmt.Println("Step into the real CalSynDep")
@@ -566,22 +588,35 @@ func (pj *Prjn) CalSynDep(si int) {
 
 // SendGDelta sends the delta-activation from sending neuron index si,
 // to integrate synaptic conductances on receivers
-func (pj *Prjn) SendGDelta(si int, delta float32) {
+func (pj *Prjn) SendGDelta(si int, delta float32, sleep bool) {
 	scdel := delta * pj.GScale
 	nc := pj.SConN[si]
 	st := pj.SConIdxSt[si]
 	syns := pj.Syns[st : st+nc]
 	scons := pj.SConIdx[st : st+nc]
-	for ci := range syns {
-		ri := scons[ci]
-		// DS note: Wt changed to Effwt here. This allows Syn dep to take effect during sleep, but otherwise should let Activations be based on Wt (since Effwt = Wt prior to InitSdEffWt)
-		pj.GInc[ri] += scdel * syns[ci].Effwt // Checking if just replacing this with Effwt will do the trick for acts. It Does!
+
+	if sleep {
+		for ci := range syns {
+			ri := scons[ci]
+			// DS note: Wt changed to Effwt here. This allows Syn dep to take effect during sleep, but otherwise should let Activations be based on Wt (since Effwt = Wt prior to InitSdEffWt)
+			pj.GInc[ri] += scdel * syns[ci].Effwt // Checking if just replacing this with Effwt will do the trick for acts. It Does!
+		}
 	}
+
+	if !sleep{
+		for ci := range syns {
+			ri := scons[ci]
+			// DS note: Wt changed to Effwt here. This allows Syn dep to take effect during sleep, but otherwise should let Activations be based on Wt (since Effwt = Wt prior to InitSdEffWt)
+			pj.GInc[ri] += scdel * syns[ci].Effwt // Checking if just replacing this with Effwt will do the trick for acts. It Does!
+		}
+	}
+
 }
 
 // RecvGInc increments the receiver's GeInc or GiInc from that of all the projections.
 func (pj *Prjn) RecvGInc() {
 	rlay := pj.Recv.(LeabraLayer).AsLeabra()
+
 	if pj.Typ == emer.Inhib {
 		for ri := range rlay.Neurons {
 			rn := &rlay.Neurons[ri]
@@ -595,6 +630,7 @@ func (pj *Prjn) RecvGInc() {
 			pj.GInc[ri] = 0
 		}
 	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -632,6 +668,7 @@ func (pj *Prjn) DWt() {
 			if pj.Learn.Momentum.On {
 				dwt = norm * pj.Learn.Momentum.MomentFmDWt(&sy.Moment, dwt)
 			} else {
+				dwt *= norm
 				dwt *= norm
 			}
 			sy.DWt += pj.Learn.Lrate * dwt

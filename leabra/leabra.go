@@ -86,10 +86,10 @@ type LeabraLayer interface {
 
 	// SendGDelta sends change in activation since last sent, to increment recv
 	// synaptic conductances G, if above thresholds
-	SendGDelta(ltime *Time)
+	SendGDelta(ltime *Time, sleep bool)
 
 	// GFmInc integrates new synaptic conductances from increments sent during last SendGDelta
-	GFmInc(ltime *Time)
+	GFmInc(ltime *Time, sleep bool)
 
 	// AvgMaxGe computes the average and max Ge stats, used in inhibition
 	AvgMaxGe(ltime *Time)
@@ -166,7 +166,7 @@ type LeabraPrjn interface {
 
 	// SendGDelta sends the delta-activation from sending neuron index si,
 	// to integrate synaptic conductances on receivers
-	SendGDelta(si int, delta float32)
+	SendGDelta(si int, delta float32, sleep bool)
 
 	// RecvGInc increments the receiver's synaptic conductances from those of all the projections.
 	RecvGInc()
@@ -197,5 +197,10 @@ type LeabraPrjn interface {
 
 	// DS added
 	TermSdEffWt()
+
 	RunSumUpdt(init bool, ni int, act float32)
+
+	CalcActM(minuscount int, ni int)
+
+	CalcActP(pluscount int, ni int)
 }

@@ -8,9 +8,9 @@ import (
 	"github.com/chewxy/math32"
 	"github.com/emer/emergent/erand"
 	"github.com/emer/etable/minmax"
-	"github.com/emer/leabra/chans"
-	"github.com/emer/leabra/knadapt"
-	"github.com/emer/leabra/nxx1"
+	"github.com/dhairyyas/leabra-sleep/chans"
+	"github.com/dhairyyas/leabra-sleep/knadapt"
+	"github.com/dhairyyas/leabra-sleep/nxx1"
 	"github.com/goki/ki/ints"
 	"github.com/goki/ki/kit"
 	"github.com/goki/mat32"
@@ -138,17 +138,26 @@ func (ac *ActParams) InitActQs(nrn *Neuron) {
 //  Cycle
 
 // GRawFmInc integrates G conductance from Inc delta-increment sent.
-func (ac *ActParams) GRawFmInc(nrn *Neuron) {
-	nrn.GeRaw += nrn.GeInc
-	nrn.GeInc = 0
+func (ac *ActParams) GRawFmInc(nrn *Neuron, sleep bool) {
+	if sleep{
+		nrn.GeRaw = nrn.GeInc
+		nrn.GeInc = 0
 
-	nrn.GiRaw += nrn.GiInc
-	nrn.GiInc = 0
+		nrn.GiRaw = nrn.GiInc
+		nrn.GiInc = 0
+	}
+	if !sleep{
+		nrn.GeRaw += nrn.GeInc
+		nrn.GeInc = 0
+
+		nrn.GiRaw += nrn.GiInc
+		nrn.GiInc = 0
+	}
 }
 
 // GeFmRaw integrates Ge excitatory conductance from GeRaw value
 // (can add other terms to geRaw prior to calling this)
-func (ac *ActParams) GeFmRaw(nrn *Neuron, geRaw float32) {
+func (ac *ActParams) GeFmRaw(nrn *Neuron, geRaw float32, sleep bool) {
 	if !ac.Clamp.Hard && nrn.HasFlag(NeurHasExt) {
 		if ac.Clamp.Avg {
 			geRaw = ac.Clamp.AvgGe(nrn.Ext, geRaw)
@@ -157,7 +166,7 @@ func (ac *ActParams) GeFmRaw(nrn *Neuron, geRaw float32) {
 		}
 	}
 
-	ac.Dt.GFmRaw(geRaw, &nrn.Ge)
+	ac.Dt.GFmRaw(geRaw, &nrn.Ge, sleep)
 	// first place noise is required -- generate here!
 	if ac.Noise.Type != NoNoise && !ac.Noise.Fixed && ac.Noise.Dist != erand.Mean {
 		nrn.Noise = float32(ac.Noise.Gen(-1))
@@ -169,8 +178,8 @@ func (ac *ActParams) GeFmRaw(nrn *Neuron, geRaw float32) {
 
 // GiFmRaw integrates GiSyn inhibitory synaptic conductance from GiRaw value
 // (can add other terms to geRaw prior to calling this)
-func (ac *ActParams) GiFmRaw(nrn *Neuron, giRaw float32) {
-	ac.Dt.GFmRaw(giRaw, &nrn.GiSyn)
+func (ac *ActParams) GiFmRaw(nrn *Neuron, giRaw float32, sleep bool) {
+	ac.Dt.GFmRaw(giRaw, &nrn.GiSyn, sleep)
 	nrn.GiSyn = math32.Max(nrn.GiSyn, 0) // negative inhib G doesn't make any sense
 
 }
@@ -334,8 +343,14 @@ func (dp *DtParams) Defaults() {
 	dp.Update()
 }
 
-func (dp *DtParams) GFmRaw(geRaw float32, ge *float32) {
-	*ge += dp.GDt * (geRaw - *ge)
+func (dp *DtParams) GFmRaw(geRaw float32, ge *float32, sleep bool) {
+	if sleep{
+		*ge += dp.GDt * (geRaw - *ge)
+	}
+	if !sleep{
+		*ge += dp.GDt * (geRaw - *ge)
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

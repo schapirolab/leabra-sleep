@@ -5,8 +5,9 @@
 package hip
 
 import (
+	"fmt"
 	"github.com/chewxy/math32"
-	"github.com/emer/leabra/leabra"
+	"github.com/dhairyyas/leabra-sleep/leabra"
 )
 
 // Contrastive Hebbian Learning (CHL) parameters
@@ -106,12 +107,82 @@ func (pj *CHLPrjn) DWt() {
 	}
 }
 
+// DS Added
+func (pj *CHLPrjn) SlpDWt() {
+	if !pj.Learn.Learn {
+		return
+	}
+	if pj.CHL.On {
+		pj.SlpDWtCHL()
+	} else {
+		fmt.Println("error - projection is not CHL learning on and sleep dwt won't work")
+	}
+}
+
 // SAvgCor computes the sending average activation, corrected according to the SAvgCor
 // correction factor (typically makes layer appear more sparse than it is)
 func (pj *CHLPrjn) SAvgCor(slay *leabra.Layer) float32 {
 	savg := .5 + pj.CHL.SAvgCor*(slay.Pools[0].ActAvg.ActPAvgEff-0.5)
 	savg = math32.Max(pj.CHL.SAvgThr, savg) // keep this computed value within bounds
 	return 0.5 / savg
+}
+
+// DS Added
+// SlpDWtCHL computes sleep error driven learning using avg plus phase and minus phase activations
+func (pj *CHLPrjn) SlpDWtCHL() {
+	slay := pj.Send.(leabra.LeabraLayer).AsLeabra()
+	//rlay := pj.Recv.(leabra.LeabraLayer).AsLeabra()
+	//if slay.Pools[0].ActP.Avg < pj.CHL.SAvgThr { // inactive, no learn
+	//	return
+	//}
+	for si := range slay.Neurons {
+		//sn := &slay.Neurons[si]
+		nc := int(pj.SConN[si])
+		st := int(pj.SConIdxSt[si])
+		syns := pj.Syns[st : st+nc]
+		//scons := pj.SConIdx[st : st+nc]
+		//snActM := pj.CHL.MinusAct(sn.ActM, sn.ActQ1)
+		//savgCor := pj.SAvgCor(slay)
+		for ci := range syns {
+			sy := &syns[ci]
+			//ri := scons[ci]
+			//rn := &rlay.Neurons[ri]
+
+			err := sy.ActPAvg - sy.ActMAvg
+			sy.ActMAvg = 0
+			sy.ActPAvg = 0
+			if err > 0 {
+				err *= (1 -  sy.LWt)
+			} else {
+				err *=  sy.LWt
+			}
+			dwt := err
+			norm := float32(1)
+			if pj.Learn.Norm.On {
+				norm = pj.Learn.Norm.NormFmAbsDWt(&sy.Norm, math32.Abs(dwt))
+			}
+			if pj.Learn.Momentum.On {
+				dwt = norm * pj.Learn.Momentum.MomentFmDWt(&sy.Moment, dwt)
+			} else {
+				dwt *= norm
+			}
+			sy.DWt += pj.Learn.Lrate * dwt
+		}
+		// aggregate max DWtNorm over sending synapses
+		if pj.Learn.Norm.On {
+			maxNorm := float32(0)
+			for ci := range syns {
+				sy := &syns[ci]
+				if sy.Norm > maxNorm {
+					maxNorm = sy.Norm
+				}
+			}
+			for ci := range syns {
+				sy := &syns[ci]
+				sy.Norm = maxNorm
+			}
+		}
+	}
 }
 
 // DWtCHL computes the weight change (learning) for CHL

@@ -165,10 +165,10 @@ func (nt *Network) GScaleFmAvgAct() {
 // * Average and Max Act stats
 // This basic version doesn't use the time info, but more specialized types do, and we
 // want to keep a consistent API for end-user code.
-func (nt *Network) Cycle(ltime *Time) {
+func (nt *Network) Cycle(ltime *Time, sleep bool) {
 	nt.CalSynDep(ltime)  //Added Synaptic depression by DH.
 	nt.CalLaySim(ltime)  //Added Layer similarity monitor by DH.
-	nt.SendGDelta(ltime) // also does integ
+	nt.SendGDelta(ltime, sleep) // also does integ
 	nt.AvgMaxGe(ltime)
 	nt.InhibFmGeAct(ltime)
 	nt.ActFmG(ltime)
@@ -191,9 +191,9 @@ func (nt *Network) CalLaySim(ltime *Time) {
 
 // SendGeDelta sends change in activation since last sent, if above thresholds
 // and integrates sent deltas into GeRaw and time-integrated Ge values
-func (nt *Network) SendGDelta(ltime *Time) {
-	nt.ThrLayFun(func(ly LeabraLayer) { ly.SendGDelta(ltime) }, "SendGDelta")
-	nt.ThrLayFun(func(ly LeabraLayer) { ly.GFmInc(ltime) }, "GFmInc   ")
+func (nt *Network) SendGDelta(ltime *Time, sleep bool) {
+	nt.ThrLayFun(func(ly LeabraLayer) { ly.SendGDelta(ltime, sleep) }, "SendGDelta")
+	nt.ThrLayFun(func(ly LeabraLayer) { ly.GFmInc(ltime, sleep) }, "GFmInc")
 }
 
 // AvgMaxGe computes the average and max Ge stats, used in inhibition

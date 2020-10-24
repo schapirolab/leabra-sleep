@@ -9,8 +9,8 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/emer/etable/minmax"
-	"github.com/emer/leabra/deep"
-	"github.com/emer/leabra/leabra"
+	"github.com/dhairyyas/leabra-sleep/deep"
+	"github.com/dhairyyas/leabra-sleep/leabra"
 	"github.com/goki/ki/kit"
 )
 

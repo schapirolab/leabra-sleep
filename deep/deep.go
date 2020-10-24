@@ -5,7 +5,7 @@
 package deep
 
 import (
-	"github.com/emer/leabra/leabra"
+	"github.com/dhairyyas/leabra-sleep/leabra"
 )
 
 // DeepLayer defines the essential algorithmic API for DeepLeabra at the layer level.

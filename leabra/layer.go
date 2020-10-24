@@ -603,6 +603,40 @@ func (ly *Layer) RunSumUpdt(init bool) {
 	}
 }
 
+
+
+//CalcActP calculates final ActP values for each synapse
+func (ly *Layer) CalcActP(pluscount int) {
+	for ni := range ly.Neurons {
+		nrn := &ly.Neurons[ni]
+		if nrn.IsOff() {
+			continue
+		}
+		for _, sp := range ly.SndPrjns {
+			if sp.IsOff() {
+				continue
+			}
+			sp.(LeabraPrjn).CalcActP(pluscount, ni)
+		}
+	}
+}
+
+//CalcActM calculates final ActM values for each synapse
+func (ly *Layer) CalcActM(minuscount int) {
+	for ni := range ly.Neurons {
+		nrn := &ly.Neurons[ni]
+		if nrn.IsOff() {
+			continue
+		}
+		for _, sp := range ly.SndPrjns {
+			if sp.IsOff() {
+				continue
+			}
+			sp.(LeabraPrjn).CalcActM(minuscount, ni)
+		}
+	}
+}
+
 // DZ added
 // CalLaySim calculate the similarity of the PrevState and CurState of activation.
 func (ly *Layer) CalLaySim(ltime *Time) {
@@ -615,6 +649,8 @@ func (ly *Layer) CalLaySim(ltime *Time) {
 
 	sim := stat.Correlation(PrevState, CurState, nil)
 
+	//fmt.Println(sim)
+
 	// DS: check if lay sim is nan (can happen if the layer act goes to 0 for whatever reason at a given cycle) and set
 	// lay sim to 0 for that cycle. This is important because emergent doesn't like nan values and the gui has issues with plotting slices with nans.
 	if math.IsNaN(sim) {
@@ -622,6 +658,8 @@ func (ly *Layer) CalLaySim(ltime *Time) {
 	} else {
 		ly.Sim = sim
 	}
+
+	//fmt.Println(ly.Sim, ly.Name())
 
 }
 
@@ -1031,40 +1069,54 @@ func (ly *Layer) InitGInc() {
 
 // SendGDelta sends change in activation since last sent, to increment recv
 // synaptic conductances G, if above thresholds
-func (ly *Layer) SendGDelta(ltime *Time) {
+func (ly *Layer) SendGDelta(ltime *Time, sleep bool) {
 	for ni := range ly.Neurons {
 		nrn := &ly.Neurons[ni]
 		if nrn.IsOff() {
 			continue
 		}
-		if nrn.Act > ly.Act.OptThresh.Send {
-			delta := nrn.Act - nrn.ActSent
-			if math32.Abs(delta) > ly.Act.OptThresh.Delta {
-				for _, sp := range ly.SndPrjns {
-					if sp.IsOff() {
-						continue
-					}
-					sp.(LeabraPrjn).SendGDelta(ni, delta)
-				}
-				nrn.ActSent = nrn.Act
-			}
-		} else if nrn.ActSent > ly.Act.OptThresh.Send {
-			delta := -nrn.ActSent // un-send the last above-threshold activation to get back to 0
+		if sleep { // Non-sender-reciever delta algo
+			delta := nrn.Act
 			for _, sp := range ly.SndPrjns {
 				if sp.IsOff() {
 					continue
 				}
-				sp.(LeabraPrjn).SendGDelta(ni, delta)
+				sp.(LeabraPrjn).SendGDelta(ni, delta, true)
 			}
-			nrn.ActSent = 0
+			nrn.ActSent = nrn.Act
 		}
+
+		if !sleep {
+			if nrn.Act > ly.Act.OptThresh.Send {
+				delta := nrn.Act - nrn.ActSent
+				if math32.Abs(delta) > ly.Act.OptThresh.Delta {
+					for _, sp := range ly.SndPrjns {
+						if sp.IsOff() {
+							continue
+						}
+						sp.(LeabraPrjn).SendGDelta(ni, delta, false)
+					}
+					nrn.ActSent = nrn.Act
+				}
+			} else if nrn.ActSent > ly.Act.OptThresh.Send {
+				delta := -nrn.ActSent // un-send the last above-threshold activation to get back to 0
+				for _, sp := range ly.SndPrjns {
+					if sp.IsOff() {
+						continue
+					}
+					sp.(LeabraPrjn).SendGDelta(ni, delta, sleep)
+				}
+				nrn.ActSent = 0
+			}
+		}
+
 	}
 }
 
 // GFmInc integrates new synaptic conductances from increments sent during last SendGDelta.
-func (ly *Layer) GFmInc(ltime *Time) {
+func (ly *Layer) GFmInc(ltime *Time, sleep bool) {
 	ly.RecvGInc(ltime)
-	ly.GFmIncNeur(ltime)
+	ly.GFmIncNeur(ltime, sleep)
 }
 
 // RecvGInc calls RecvGInc on receiving projections to collect Neuron-level G*Inc values.
@@ -1081,16 +1133,17 @@ func (ly *Layer) RecvGInc(ltime *Time) {
 
 // GFmIncNeur is the neuron-level code for GFmInc that integrates G*Inc into G*Raw
 // and finally overall Ge, Gi values
-func (ly *Layer) GFmIncNeur(ltime *Time) {
+func (ly *Layer) GFmIncNeur(ltime *Time, sleep bool) {
 	for ni := range ly.Neurons {
 		nrn := &ly.Neurons[ni]
+
 		if nrn.IsOff() {
 			continue
 		}
 		// note: each step broken out here so other variants can add extra terms to Raw
-		ly.Act.GRawFmInc(nrn)
-		ly.Act.GeFmRaw(nrn, nrn.GeRaw)
-		ly.Act.GiFmRaw(nrn, nrn.GiRaw)
+		ly.Act.GRawFmInc(nrn, sleep)
+		ly.Act.GeFmRaw(nrn, nrn.GeRaw, sleep)
+		ly.Act.GiFmRaw(nrn, nrn.GiRaw, sleep)
 	}
 }
 
