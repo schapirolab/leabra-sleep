@@ -126,14 +126,14 @@ func (sy *Synapse) CaUpdt(ru_act float32, su_act float32) {
 }
 
 func (sy *Synapse) RunSumUpdt(init bool, ru_act float32, su_act float32, ) {
-	if sy.Sleep == 1 { // adding extra check just in case
+	//if sy.Sleep == 1 { // adding extra check just in case // removed since runsumupdt is only called when sleep is on.
 		if init {
 			sy.RunSum = 0
 			sy.RunSum = (ru_act * su_act)
 		} else {
 			sy.RunSum = sy.RunSum + (ru_act * su_act)
 		}
-	}
+	//}
 }
 
 // CalcActP calculates final ActP values for each synapse

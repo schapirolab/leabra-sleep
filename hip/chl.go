@@ -149,8 +149,8 @@ func (pj *CHLPrjn) SlpDWtCHL() {
 			//rn := &rlay.Neurons[ri]
 
 			err := sy.ActPAvg - sy.ActMAvg
-			sy.ActMAvg = 0
-			sy.ActPAvg = 0
+			//sy.ActMAvg = 0
+			//sy.ActPAvg = 0
 			if err > 0 {
 				err *= (1 -  sy.LWt)
 			} else {
