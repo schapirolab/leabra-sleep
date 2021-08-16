@@ -603,8 +603,6 @@ func (ly *Layer) RunSumUpdt(init bool) {
 	}
 }
 
-
-
 //CalcActP calculates final ActP values for each synapse
 func (ly *Layer) CalcActP(pluscount int) {
 	for ni := range ly.Neurons {
@@ -919,30 +917,48 @@ func (ly *Layer) UpdateExtFlags() {
 // AlphaCycInit handles all initialization at start of new input pattern, including computing
 // input scaling from running average activation etc.
 // should already have presented the external input to the network at this point.
-func (ly *Layer) AlphaCycInit() {
-	ly.LeabraLay.AvgLFmAvgM()
-	for pi := range ly.Pools {
-		pl := &ly.Pools[pi]
-		ly.Inhib.ActAvg.AvgFmAct(&pl.ActAvg.ActMAvg, pl.ActM.Avg)
-		ly.Inhib.ActAvg.AvgFmAct(&pl.ActAvg.ActPAvg, pl.ActP.Avg)
-		ly.Inhib.ActAvg.EffFmAvg(&pl.ActAvg.ActPAvgEff, pl.ActAvg.ActPAvg)
-	}
-	for ni := range ly.Neurons {
-		nrn := &ly.Neurons[ni]
-		if nrn.IsOff() {
-			continue
+func (ly *Layer) AlphaCycInit(train bool) {
+
+	if train {
+		ly.LeabraLay.AvgLFmAvgM()
+		for pi := range ly.Pools {
+			pl := &ly.Pools[pi]
+			ly.Inhib.ActAvg.AvgFmAct(&pl.ActAvg.ActMAvg, pl.ActM.Avg)
+			ly.Inhib.ActAvg.AvgFmAct(&pl.ActAvg.ActPAvg, pl.ActP.Avg)
+			ly.Inhib.ActAvg.EffFmAvg(&pl.ActAvg.ActPAvgEff, pl.ActAvg.ActPAvg)
 		}
-		nrn.ActQ0 = nrn.ActP
+		for ni := range ly.Neurons {
+			nrn := &ly.Neurons[ni]
+			if nrn.IsOff() {
+				continue
+			}
+			nrn.ActQ0 = nrn.ActP
+		}
+		ly.LeabraLay.GScaleFmAvgAct()
+		if ly.Act.Noise.Type != NoNoise && ly.Act.Noise.Fixed && ly.Act.Noise.Dist != erand.Mean {
+			ly.LeabraLay.GenNoise()
+		}
+		ly.LeabraLay.DecayState(ly.Act.Init.Decay)
+		ly.LeabraLay.InitGInc()
+		if ly.Act.Clamp.Hard && ly.Typ == emer.Input {
+			ly.LeabraLay.HardClamp()
+		}
 	}
-	ly.LeabraLay.GScaleFmAvgAct()
-	if ly.Act.Noise.Type != NoNoise && ly.Act.Noise.Fixed && ly.Act.Noise.Dist != erand.Mean {
-		ly.LeabraLay.GenNoise()
+
+	if !train {
+
+		if ly.Act.Noise.Type != NoNoise && ly.Act.Noise.Fixed && ly.Act.Noise.Dist != erand.Mean {
+			ly.LeabraLay.GenNoise()
+		}
+
+		ly.LeabraLay.DecayState(ly.Act.Init.Decay)
+		ly.LeabraLay.InitGInc()
+		if ly.Act.Clamp.Hard && ly.Typ == emer.Input {
+			ly.LeabraLay.HardClamp()
+		}
+
 	}
-	ly.LeabraLay.DecayState(ly.Act.Init.Decay)
-	ly.LeabraLay.InitGInc()
-	if ly.Act.Clamp.Hard && ly.Typ == emer.Input {
-		ly.LeabraLay.HardClamp()
-	}
+
 }
 
 // AvgLFmAvgM updates AvgL long-term running average activation that drives BCM Hebbian learning

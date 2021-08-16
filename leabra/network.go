@@ -129,12 +129,12 @@ func (nt *Network) InitGInc() {
 
 // AlphaCycInit handles all initialization at start of new input pattern, including computing
 // input scaling from running average activation etc.
-func (nt *Network) AlphaCycInit() {
+func (nt *Network) AlphaCycInit(train bool) {
 	for _, ly := range nt.Layers {
 		if ly.IsOff() {
 			continue
 		}
-		ly.(LeabraLayer).AlphaCycInit()
+		ly.(LeabraLayer).AlphaCycInit(train)
 	}
 }
 

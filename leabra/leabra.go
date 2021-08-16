@@ -57,7 +57,7 @@ type LeabraLayer interface {
 	// AlphaCycInit handles all initialization at start of new input pattern, including computing
 	// netinput scaling from running average activation etc.
 	// should already have presented the external input to the network at this point.
-	AlphaCycInit()
+	AlphaCycInit(train bool)
 
 	// AvgLFmAvgM updates AvgL long-term running average activation that drives BCM Hebbian learning
 	AvgLFmAvgM()
