@@ -6,6 +6,7 @@ package hip
 
 import (
 	"fmt"
+
 	"github.com/chewxy/math32"
 	"github.com/schapirolab/leabra-sleep/leabra"
 )
@@ -108,12 +109,12 @@ func (pj *CHLPrjn) DWt() {
 }
 
 // DS Added
-func (pj *CHLPrjn) SlpDWt() {
+func (pj *CHLPrjn) SlpDWt(lrule string) {
 	if !pj.Learn.Learn {
 		return
 	}
 	if pj.CHL.On {
-		pj.SlpDWtCHL()
+		pj.SlpDWtCHL(lrule)
 	} else {
 		fmt.Println("error - projection is not CHL learning on and sleep dwt won't work")
 	}
@@ -129,7 +130,7 @@ func (pj *CHLPrjn) SAvgCor(slay *leabra.Layer) float32 {
 
 // DS Added
 // SlpDWtCHL computes sleep error driven learning using avg plus phase and minus phase activations
-func (pj *CHLPrjn) SlpDWtCHL() {
+func (pj *CHLPrjn) SlpDWtCHL(lrule string) {
 	slay := pj.Send.(leabra.LeabraLayer).AsLeabra()
 	//rlay := pj.Recv.(leabra.LeabraLayer).AsLeabra()
 	//if slay.Pools[0].ActP.Avg < pj.CHL.SAvgThr { // inactive, no learn
@@ -148,13 +149,20 @@ func (pj *CHLPrjn) SlpDWtCHL() {
 			//ri := scons[ci]
 			//rn := &rlay.Neurons[ri]
 
+			// DS: NOTE that this is where the error driven subtration happens
 			err := sy.ActPAvg - sy.ActMAvg
+
+			if lrule == "hebb" {
+				// DS: Converting to this line will make it hebbian - although note that these errors are large
+				err = sy.ActPAvg
+			}
+
 			//sy.ActMAvg = 0
 			//sy.ActPAvg = 0
 			if err > 0 {
-				err *= (1 -  sy.LWt)
+				err *= (1 - sy.LWt)
 			} else {
-				err *=  sy.LWt
+				err *= sy.LWt
 			}
 			dwt := err
 			norm := float32(1)
